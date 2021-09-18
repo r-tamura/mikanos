@@ -44,8 +44,10 @@ extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config) {
     }
   }
 
-  WriteAscii(*pixel_writer, 50, 50, 'A', {0, 0, 0});
-  WriteAscii(*pixel_writer, 58, 50, 'A', {0, 0, 0});
+  int i = 0;
+  for (char c = '!'; c <= 'c'; ++c, ++i) {
+    WriteAscii(*pixel_writer, i * 8, 50, i, {10, 0, 0});
+  }
 
   while (1) __asm__("hlt");
 }
