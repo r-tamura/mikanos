@@ -5,10 +5,12 @@
  */
 #include <cstdint>
 #include <cstddef>
+#include <cstdio>
 
 #include "frame_buffer_config.hpp"
 #include "graphics.hpp"
 #include "font.hpp"
+#include "console.hpp"
 
 void* operator new(size_t size, void* buf) {
   return buf;
@@ -19,7 +21,7 @@ void operator delete(void* obj) noexcept {
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter* pixel_writer;
-
+Console console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
 
 extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config) {
   switch (frame_buffer_config.pixel_format) {
@@ -38,15 +40,11 @@ extern "C" void KernelMain(const FrameBufferConfig& frame_buffer_config) {
     }
   }
 
-  for (int x = 0; x < 200; ++x) {
-    for (int y = 0; y < 100; ++y) {
-      pixel_writer->Write(x, y, {0, 255, 0});
-    }
-  }
-
-  int i = 0;
-  for (char c = '!'; c <= 'c'; ++c, ++i) {
-    WriteAscii(*pixel_writer, i * 8, 50, i, {10, 0, 0});
+  Console console{*pixel_writer, {0, 0, 0}, {255, 255, 255}};
+  char buf[128];
+  for (int i = 0; i < 27; ++i) {
+    sprintf(buf, "line %d\n", i);
+    console.PutString(buf);
   }
 
   while (1) __asm__("hlt");
