@@ -11,16 +11,9 @@
 #include  <Guid/FileInfo.h>
 
 #include  "frame_buffer_config.hpp"
+#include  "memory_map.hpp"
 #include  "elf.h"
 
-struct MemoryMap {
-  UINTN buffer_size;
-  VOID* buffer;
-  UINTN map_size;
-  UINTN map_key;
-  UINTN descriptor_size;
-  UINT32 descriptor_version;
-};
 
 EFI_STATUS GetMemoryMap(struct MemoryMap* map) {
   if (map->buffer == NULL) {
@@ -333,7 +326,6 @@ EFI_STATUS EFIAPI UefiMain(
     Halt();
   }
 
-  // #@@range_begin(exit_bs)
   status = gBS->ExitBootServices(image_handle, memmap.map_key);
   if (EFI_ERROR(status)) {
     status = GetMemoryMap(&memmap);
@@ -347,9 +339,7 @@ EFI_STATUS EFIAPI UefiMain(
       Halt();
     }
   }
-  // #@@range_end(exit_bs)
 
-  // #@@range_begin(call_kernel)
   struct FrameBufferConfig config = {
     (UINT8*)gop->Mode->FrameBufferBase,
     gop->Mode->Info->PixelsPerScanLine,
@@ -370,10 +360,10 @@ EFI_STATUS EFIAPI UefiMain(
   }
   UINT64 entry_addr = *(UINT64*)(kernel_first_addr + 24);
 
-  typedef void EntryPointType(const struct FrameBufferConfig*);
+  typedef void EntryPointType(const struct FrameBufferConfig*,
+                              const struct MemoryMap*);
   EntryPointType* entry_point = (EntryPointType*)entry_addr;
-  entry_point(&config);
-  // #@@range_end(call_kernel)
+  entry_point(&config, &memmap);
 
   Print(L"All done\n");
 
