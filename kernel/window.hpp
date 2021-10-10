@@ -38,7 +38,7 @@ class Window {
     WindowWriter* Writer();
 
     const PixelColor& At(Vector2D<int> pos) const;
-    void Write(Vector2D<int> post, PixelColor c);
+    void Write(Vector2D<int> pos, PixelColor c);
 
     int Width() const;
     int Height() const;
@@ -58,3 +58,5 @@ class Window {
 
     FrameBuffer shadow_buffer_{};
 };
+
+void DrawWindow(PixelWriter& writer, const char* title);
