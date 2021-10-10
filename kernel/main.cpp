@@ -128,7 +128,7 @@ extern "C" void KernelMainNewStack(
     kDesktopFGColor, kDesktopBGColor
   };
   console->SetWriter(pixel_writer);
-  printk("Welcom to MikanOS!\n");
+  printk("Welcome to MikanOS!\n");
   SetLogLevel(kWarn);
 
   InitializeLAPICTimer();
@@ -223,7 +223,7 @@ extern "C" void KernelMainNewStack(
   const WithError<uint64_t> xhc_bar = pci::ReadBar(*xhc_dev, 0);
   Log(kDebug, "ReadBar: %s\n", xhc_bar.error.Name());
   const uint64_t xhc_mmio_base = xhc_bar.value & ~static_cast<uint64_t>(0xf);
-  Log(kDebug, "xHC mmio_base: %08lx\n", xhc_mmio_base);
+  Log(kDebug, "xHC mmio_base = %08lx\n", xhc_mmio_base);
 
   usb::xhci::Controller xhc{xhc_mmio_base};
 
@@ -239,7 +239,6 @@ extern "C" void KernelMainNewStack(
   xhc.Run();
 
   ::xhc = &xhc;
-  __asm__("sti");
 
   usb::HIDMouseDriver::default_observer = MouseObserver;
 
@@ -259,19 +258,26 @@ extern "C" void KernelMainNewStack(
   const int kFrameWidth = frame_buffer_config.horizontal_resolution;
   const int kFrameHeight = frame_buffer_config.vertical_resolution;
 
-  auto bgwindow = std::make_shared<Window>(kFrameWidth, kFrameHeight);
+  auto bgwindow = std::make_shared<Window>(
+    kFrameWidth, kFrameHeight, frame_buffer_config.pixel_format);
   auto bgwriter = bgwindow->Writer();
 
   DrawDesktop(*bgwriter);
   console->SetWriter(bgwriter);
 
   auto mouse_window = std::make_shared<Window>(
-    kMouseCursorWidth, kMouseCursorHeight);
+    kMouseCursorWidth, kMouseCursorHeight, frame_buffer_config.pixel_format);
   mouse_window->SetTransparentColor(kMouseTransparentColor);
   DrawMouseCursor(mouse_window->Writer(), {0, 0});
 
+  FrameBuffer screen;
+  if (auto err = screen.Initialize(frame_buffer_config)) {
+    Log(kError, "failed to initialize frame buffer: %s at %s:%d\n",
+      err.Name(), err.File(), err.Line());
+  }
+
   layer_manager = new LayerManager;
-  layer_manager->SetWriter(pixel_writer);
+  layer_manager->SetWriter(&screen);
 
   auto bglayer_id = layer_manager->NewLayer()
     .SetWindow(bgwindow)
