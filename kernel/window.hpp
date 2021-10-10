@@ -43,6 +43,13 @@ class Window {
     int Width() const;
     int Height() const;
 
+    /** @brief このウィンドウの平面描画領域内で、矩形領域を異動する。
+     *
+     * @param dst_pos  移動先の原点
+     * @param src      移動元矩形の原点と大きさ
+     */
+    void Move(Vector2D<int> dst_pos, const Rectangle<int>& src);
+
   private:
     int width_, height_;
     std::vector<std::vector<PixelColor>> data_{};
