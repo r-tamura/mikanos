@@ -1,20 +1,34 @@
 #pragma once
 
-// #@@range_begin(pixel_color_def)
 #include "frame_buffer_config.hpp"
 
 struct PixelColor {
   uint8_t r, g, b;
 };
-// #@@range_end(pixel_color_def)
+
+inline bool operator==(const PixelColor& lhs, const PixelColor& rhs) {
+  return lhs.r == rhs.r && lhs.g == rhs.g && lhs.b == rhs.b;
+};
+
+inline bool operator!=(const PixelColor& lhs, const PixelColor& rhs) {
+  return !(lhs == rhs);
+};
 
 class PixelWriter {
  public:
-  PixelWriter(const FrameBufferConfig& config) : config_{config} {
-  }
   virtual ~PixelWriter() = default;
   virtual void Write(int x, int y, const PixelColor& c) = 0;
+  virtual int Width() const = 0;
+  virtual int Height() const = 0;
+};
 
+class FrameBufferWriter : public PixelWriter {
+ public:
+  FrameBufferWriter(const FrameBufferConfig& config) : config_{config} {
+  }
+  virtual ~FrameBufferWriter() = default;
+  virtual int Width() const override { return config_.horizontal_resolution; }
+  virtual int Height() const override { return config_.vertical_resolution; }
  protected:
   uint8_t* PixelAt(int x, int y) {
     return config_.frame_buffer + 4 * (config_.pixels_per_scan_line * y + x);
@@ -25,15 +39,15 @@ class PixelWriter {
 };
 
 // #@@range_begin(pixel_writer_def)
-class RGBResv8BitPerColorPixelWriter : public PixelWriter {
+class RGBResv8BitPerColorPixelWriter : public FrameBufferWriter {
  public:
-  using PixelWriter::PixelWriter;
+  using FrameBufferWriter::FrameBufferWriter;
   virtual void Write(int x, int y, const PixelColor& c) override;
 };
 
-class BGRResv8BitPerColorPixelWriter : public PixelWriter {
+class BGRResv8BitPerColorPixelWriter : public FrameBufferWriter {
  public:
-  using PixelWriter::PixelWriter;
+  using FrameBufferWriter::FrameBufferWriter;
   virtual void Write(int x, int y, const PixelColor& c) override;
 };
 
@@ -51,3 +65,8 @@ struct Vector2D {
 
 void DrawRectangle(PixelWriter&, const Vector2D<int>& pos, const Vector2D<int>& size, const PixelColor& c);
 void FillRectangle(PixelWriter&, const Vector2D<int>& pos, const Vector2D<int>& size, const PixelColor& c);
+
+const PixelColor kDesktopBGColor{45, 118, 237};
+const PixelColor kDesktopFGColor{255, 255, 255};
+
+void DrawDesktop(PixelWriter& writer);
