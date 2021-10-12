@@ -33,7 +33,7 @@ class Window {
     Window(const Window& rhs) = delete;
     Window& operator=(const Window& rhs) = delete;
 
-    void DrawTo(FrameBuffer& dst, Vector2D<int> position);
+    void DrawTo(FrameBuffer& dst, Vector2D<int> pos, const Rectangle<int>& area);
     void SetTransparentColor(std::optional<PixelColor> c);
     WindowWriter* Writer();
 
@@ -42,6 +42,7 @@ class Window {
 
     int Width() const;
     int Height() const;
+    Vector2D<int> Size() const;
 
     /** @brief このウィンドウの平面描画領域内で、矩形領域を異動する。
      *
