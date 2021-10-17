@@ -7,11 +7,11 @@
 #include <cstddef>
 #include <cstdio>
 
-#include <array>
 #include <deque>
 #include <limits>
 #include <numeric>
 #include <vector>
+#include <cstring> // Note: memsetが何故かundefinedになるため
 
 #include "frame_buffer_config.hpp"
 #include "memory_map.hpp"
@@ -20,7 +20,6 @@
 #include "font.hpp"
 #include "console.hpp"
 #include "pci.hpp"
-
 #include "logger.hpp"
 #include "usb/xhci/xhci.hpp"
 #include "interrupt.hpp"
@@ -34,6 +33,7 @@
 #include "timer.hpp"
 #include "acpi.hpp"
 #include "keyboard.hpp"
+#include "task.hpp"
 
 int printk(const char* format, ...) {
   va_list ap;
@@ -128,18 +128,9 @@ void InitializeTaskBWindow() {
   layer_manager->UpDown(task_b_window_layer_id, std::numeric_limits<int>::max());
 }
 
-struct TaskContext {
-  uint64_t cr3, rip, rflags, reserved1; // offset 0x00
-  uint64_t cs, ss, fs, gs; // offset 0x20
-  uint64_t rax, rbx, rcx, rdx, rdi, rsi, rsp, rbp; // offset 0x40
-  uint64_t r8, r9, r10, r11, r12, r13, r14, r15; // offset 0x80
-  std::array<uint8_t, 512> fxsave_area; // offset 0xc0
-} __attribute__((packed));
-
-alignas(16) TaskContext task_b_ctx, task_a_ctx;
 
 void TaskB(int task_id, int data) {
-  printk("TaskB: task_id%d, data=%d\n", task_id, data);
+  printk("TaskB: task_id=%d, data=%d\n", task_id, data);
   char str[128];
   int count = 0;
   while (true) {
@@ -148,8 +139,6 @@ void TaskB(int task_id, int data) {
     FillRectangle(*task_b_window->Writer(), {24, 28}, {8 * 10, 16}, {0xc6, 0xc6, 0xc6});
     WriteString(*task_b_window->Writer(), {24, 28}, str, {0, 0, 0});
     layer_manager->Draw(task_b_window_layer_id);
-
-    SwitchContext(&task_a_ctx, &task_b_ctx);
   }
 }
 
@@ -167,8 +156,6 @@ extern "C" void KernelMainNewStack(
   InitializeConsole();
   printk("Welcome to MikanOS!\n");
   SetLogLevel(kWarn);
-
-  SetupIdentityPageTable();
 
   InitializeSegmentation();
   InitializePaging();
@@ -204,7 +191,7 @@ extern "C" void KernelMainNewStack(
   memset(&task_b_ctx, 0, sizeof(task_b_ctx));
   task_b_ctx.rip = reinterpret_cast<uint64_t>(TaskB);
   task_b_ctx.rdi = 1;
-  task_b_ctx.rsi = 42;
+  task_b_ctx.rsi = 43;
 
   task_b_ctx.cr3 = GetCR3();
   task_b_ctx.rflags = 0x202;
@@ -214,6 +201,8 @@ extern "C" void KernelMainNewStack(
 
   // MXCSR の全ての例外をマスクする
   *reinterpret_cast<uint32_t*>(&task_b_ctx.fxsave_area[24]) = 0x1f00;
+
+  InitializeTask();
 
   char str[128];
 
@@ -229,8 +218,7 @@ extern "C" void KernelMainNewStack(
 
     __asm__("cli");
     if (main_queue->size() == 0) {
-      __asm__("sti");
-      SwitchContext(&task_b_ctx, &task_a_ctx);
+      __asm__("sti\n\thlt");
       continue;
     }
 
