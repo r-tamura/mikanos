@@ -6,7 +6,12 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <vector>
+
+#include <memory>  // Note: std::unique_ptrに必要
+#include <cstring> // Note: memsetに必要
 
 struct TaskContext {
   uint64_t cr3, rip, rflags, reserved1; // offset 0x00
@@ -18,5 +23,37 @@ struct TaskContext {
 
 extern TaskContext task_b_ctx, task_a_ctx;
 
-void SwitchTask();
+using TaskFunc = void (uint64_t, uint64_t);
+
+class Task {
+  public:
+    static const size_t kDefaultStackBytes = 4096;
+
+    Task(uint64_t id);
+    Task& InitContext(TaskFunc* f, int64_t data);
+    TaskContext& Context();
+
+  private:
+    uint64_t id_;
+    std::vector<uint64_t> stack_;
+    alignas(16) TaskContext context_;
+};
+
+using T = std::unique_ptr<Task>;
+
+class TaskManager {
+  public:
+    TaskManager();
+    Task& NewTask();
+    void SwitchTask();
+
+  private:
+    std::vector<T> tasks_{};
+    uint64_t latest_id_{0};
+    size_t current_task_index_{0};
+};
+
+extern TaskManager* task_manager;
+
 void InitializeTask();
+
