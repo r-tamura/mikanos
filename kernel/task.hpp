@@ -8,10 +8,14 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <vector>
 
 #include <memory>  // Note: std::unique_ptrに必要
 #include <cstring> // Note: memsetに必要
+#include <algorithm> // Note: std::findに必要
+
+#include "error.hpp"
 
 struct TaskContext {
   uint64_t cr3, rip, rflags, reserved1; // offset 0x00
@@ -32,6 +36,9 @@ class Task {
     Task(uint64_t id);
     Task& InitContext(TaskFunc* f, int64_t data);
     TaskContext& Context();
+    uint64_t ID() const;
+    Task& Sleep();
+    Task& Wakeup();
 
   private:
     uint64_t id_;
@@ -45,12 +52,17 @@ class TaskManager {
   public:
     TaskManager();
     Task& NewTask();
-    void SwitchTask();
+    void SwitchTask(bool current_sleep = false);
+
+    void Sleep(Task* task);
+    Error Sleep(uint64_t id);
+    void Wakeup(Task* task);
+    Error Wakeup(uint64_t id);
 
   private:
     std::vector<T> tasks_{};
     uint64_t latest_id_{0};
-    size_t current_task_index_{0};
+    std::deque<Task*> running_{};
 };
 
 extern TaskManager* task_manager;
