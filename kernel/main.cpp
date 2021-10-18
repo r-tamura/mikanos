@@ -128,7 +128,7 @@ void InitializeTaskBWindow() {
 }
 
 void TaskB(uint64_t task_id, int64_t data) {
-  printk("TaskB: task_id=%lu, data=%lx\n", task_id, data);
+  printk("TaskB: task_id=%lu, data=%lu\n", task_id, data);
   char str[128];
   int count = 0;
   while (true) {
@@ -172,7 +172,6 @@ extern "C" void KernelMainNewStack(
   layer_manager->Draw({{0, 0}, ScreenSize()});
 
   acpi::Initialize(acpi_table);
-
   InitializeLAPICTimer();
 
   const int kTextboxCursorTimer = 1;
