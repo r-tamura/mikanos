@@ -1,7 +1,7 @@
 /**
- * @file interrupt.hpp
+ * @file interrupt.cpp
  *
- * 割り込み用のプログラムを集めたファイル
+ * 割り込み用のプログラムを集めたファイル.
  */
 
 #include "interrupt.hpp"
@@ -9,6 +9,7 @@
 #include "asmfunc.h"
 #include "segment.hpp"
 #include "timer.hpp"
+#include "task.hpp"
 
 std::array<InterruptDescriptor, 256> idt;
 
@@ -19,7 +20,7 @@ void SetIDTEntry(InterruptDescriptor& desc,
   desc.attr = attr;
   desc.offset_low = offset & 0xffffu;
   desc.offset_middle = (offset >> 16) & 0xffffu;
-  desc.offset_high = (offset >> 32);
+  desc.offset_high = offset >> 32;
   desc.segment_selector = segment_selector;
 };
 
@@ -29,11 +30,9 @@ void NotifyEndOfInterrupt() {
 }
 
 namespace {
-  std::deque<Message>* msg_queue;
-
   __attribute__((interrupt))
   void IntHandlerXHCI(InterruptFrame* frame) {
-    msg_queue->push_back(Message{Message::kInterruptXHCI});
+    task_manager->SendMessage(1, Message{Message::kInterruptXHCI});
     NotifyEndOfInterrupt();
   }
 
@@ -43,9 +42,7 @@ namespace {
   }
 }
 
-void InitializeInterrupt(std::deque<Message>* msg_queue) {
-  ::msg_queue = msg_queue;
-
+void InitializeInterrupt() {
   SetIDTEntry(idt[InterruptVector::kXHCI],
               MakeIDTAttr(DescriptorType::kInterruptGate, 0),
               reinterpret_cast<uint64_t>(IntHandlerXHCI),

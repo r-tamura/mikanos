@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <optional>
 #include <vector>
 
 #include <memory>  // Note: std::unique_ptrに必要
@@ -16,6 +17,7 @@
 #include <algorithm> // Note: std::findに必要
 
 #include "error.hpp"
+#include "message.hpp"
 
 struct TaskContext {
   uint64_t cr3, rip, rflags, reserved1; // offset 0x00
@@ -25,9 +27,7 @@ struct TaskContext {
   std::array<uint8_t, 512> fxsave_area; // offset 0xc0
 } __attribute__((packed));
 
-extern TaskContext task_b_ctx, task_a_ctx;
-
-using TaskFunc = void (uint64_t, uint64_t);
+using TaskFunc = void (uint64_t, int64_t);
 
 class Task {
   public:
@@ -39,11 +39,14 @@ class Task {
     uint64_t ID() const;
     Task& Sleep();
     Task& Wakeup();
+    void SendMessage(const Message& msg);
+    std::optional<Message> ReceiveMessage();
 
   private:
     uint64_t id_;
     std::vector<uint64_t> stack_;
     alignas(16) TaskContext context_;
+    std::deque<Message> msgs_;
 };
 
 using T = std::unique_ptr<Task>;
@@ -58,6 +61,8 @@ class TaskManager {
     Error Sleep(uint64_t id);
     void Wakeup(Task* task);
     Error Wakeup(uint64_t id);
+    Error SendMessage(uint64_t id, const Message& msg);
+    Task& CurrentTask();
 
   private:
     std::vector<T> tasks_{};
