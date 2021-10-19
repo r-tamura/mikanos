@@ -148,7 +148,7 @@ Layer* LayerManager::FindLayerByPosition(Vector2D<int> pos, unsigned int exclude
     const auto win_pos = layer->GetPosition();
     const auto win_end_pos = win_pos + win->Size();
     return win_pos.x <= pos.x && pos.x < win_end_pos.x &&
-            win_pos.y <= pos.y && pos.y < win_end_pos.y;
+           win_pos.y <= pos.y && pos.y < win_end_pos.y;
   };
   auto it = std::find_if(layer_stack_.rbegin(), layer_stack_.rend(), pred);
   if (it == layer_stack_.rend()) {
@@ -169,26 +169,64 @@ Layer* LayerManager::FindLayer(unsigned int id) {
   return it->get();
 }
 
+int LayerManager::GetHeight(unsigned int id) {
+  for (int h = 0; h < layer_stack_.size(); ++h) {
+    if (layer_stack_[h]->ID() == id) {
+      return h;
+    }
+  }
+  return -1;
+}
+
 namespace {
   FrameBuffer* screen;
 }
 
 LayerManager* layer_manager;
 
+ActiveLayer::ActiveLayer(LayerManager& manager) : manager_{manager} {
+}
+
+void ActiveLayer::SetMouseLayer(unsigned int mouse_layer) {
+  mouse_layer_ = mouse_layer;
+}
+
+void ActiveLayer::Activate(unsigned int layer_id) {
+  if (active_layer_ == layer_id) {
+    return;
+  }
+
+  if (active_layer_ > 0) {
+    Layer* layer = manager_.FindLayer(active_layer_);
+    layer->GetWindow()->Deactivate();
+    manager_.Draw(active_layer_);
+  }
+
+  active_layer_ = layer_id;
+  if (active_layer_ > 0) {
+    Layer* layer = manager_.FindLayer(active_layer_);
+    layer->GetWindow()->Activate();
+    manager_.UpDown(active_layer_, manager_.GetHeight(mouse_layer_) - 1);
+    manager_.Draw(active_layer_);
+  }
+}
+
+ActiveLayer* active_layer;
+
 void InitializeLayer() {
   const auto screen_size = ScreenSize();
 
   auto bgwindow = std::make_shared<Window>(
-    screen_size.x, screen_size.y, screen_config.pixel_format);
+      screen_size.x, screen_size.y, screen_config.pixel_format);
   DrawDesktop(*bgwindow->Writer());
 
   auto console_window = std::make_shared<Window>(
-    Console::kColumns * 8, Console::kRows * 16, screen_config.pixel_format);
+      Console::kColumns * 8, Console::kRows * 16, screen_config.pixel_format);
   console->SetWindow(console_window);
 
   screen = new FrameBuffer;
   if (auto err = screen->Initialize(screen_config)) {
-    Log(kError, "failed to initialize frame buffer &s at %s:%d\n",
+    Log(kError, "failed to initialize frame buffer: &s at %s:%d\n",
         err.Name(), err.File(), err.Line());
     exit(1);
   }
@@ -207,6 +245,8 @@ void InitializeLayer() {
 
   layer_manager->UpDown(bglayer_id, 0);
   layer_manager->UpDown(console->LayerID(), 1);
+
+  active_layer = new ActiveLayer(*layer_manager);
 }
 
 void ProcessLayerMessage(const Message& msg) {
@@ -217,6 +257,7 @@ void ProcessLayerMessage(const Message& msg) {
     break;
   case LayerOperation::MoveRelative:
     layer_manager->MoveRelative(arg.layer_id, {arg.x, arg.y});
+    break;
   case LayerOperation::Draw:
     layer_manager->Draw(arg.layer_id);
     break;
