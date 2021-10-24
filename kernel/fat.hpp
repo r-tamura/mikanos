@@ -70,6 +70,7 @@ unsigned char name[11];
 } __attribute((packed));
 
 extern BPB* boot_volume_image;
+extern unsigned long bytes_per_cluster;
 void Initialize(void* volume_image);
 
 /**
@@ -98,4 +99,25 @@ T* GetSectorByCluster(unsigned long cluster) {
  * @param ext  拡張子（4 バイト以上の配列）
  */
 void ReadName(const DirectoryEntry& entry, char* base, char* ext);
+
+static const unsigned long kEndOfClusterchain = 0x0ffffffflu;
+
+/**
+ * @brief 指定されたクラスタの次のクラスタ番号を返す。
+ *
+ * @param cluster  クラスタ番号
+ * @return 次のクラスタ番号 (無い場合は kEndOfClusterchain)
+ */
+unsigned long NextCluster(unsigned long cluster);
+
+/**
+ * @brief 指定されたディレクトリからファイルを探す。
+ *
+ * @param name 8+3形式ファイル名 (大文字小文字は区別しない)
+ * @param directory_cluster ディレクトリの開始クラスタ (省略するとルートディレクトリから検索する)
+ * @return ファイルを表すエントリ。見つからなければnullptr。
+ */
+DirectoryEntry* FindFile(const char* name, unsigned long directory_cluster = 0);
+
+bool NameIsEqual(const DirectoryEntry& entry, const char* name);
 }
