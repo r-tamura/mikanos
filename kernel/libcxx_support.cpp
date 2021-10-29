@@ -4,7 +4,7 @@
 int printk(const char* format, ...);
 
 std::new_handler std::get_new_handler() noexcept {
-  return []{
+  return [] {
     printk("not enough memory\n");
     exit(1);
   };

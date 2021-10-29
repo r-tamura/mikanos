@@ -1,7 +1,8 @@
 ; asmfunc.asm
 ;
 ; System V AMD64 Calling Convention
-; Registers: RDI, RSI, RDX, RCX, RB, R9
+; Registers: RDI, RSI, RDX, RCX, R8, R9
+
 bits 64
 section .text
 
@@ -80,8 +81,19 @@ GetCR3:
   mov rax, cr3
   ret
 
-global SwitchContext:    ; void SwitchContext(void* newxt_ctx, void* current_ctx);
-SwitchContext:
+extern kernel_main_stack
+extern KernelMainNewStack
+
+global KernelMain
+KernelMain:
+  mov rsp, kernel_main_stack + 1024 * 1024
+  call KernelMainNewStack
+.fin:
+  hlt
+  jmp .fin
+
+global SwitchContext
+SwitchContext:  ; void SwitchContext(void* next_ctx, void* current_ctx);
   mov [rsi + 0x40], rax
   mov [rsi + 0x48], rbx
   mov [rsi + 0x50], rcx
@@ -155,14 +167,3 @@ SwitchContext:
   mov rdi, [rdi + 0x60]
 
   o64 iret
-
-extern kernel_main_stack
-extern KernelMainNewStack
-
-global KernelMain
-KernelMain:
-  mov rsp, kernel_main_stack + 1024 * 1024
-  call KernelMainNewStack
-.fin:
-  hlt
-  jmp .fin

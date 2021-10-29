@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstddef>
 
 namespace fat {
 
@@ -37,7 +38,7 @@ struct BPB {
   uint32_t volume_id;
   char volume_label[11];
   char fs_type[8];
-} __attribute((packed));
+} __attribute__((packed));
 
 enum class Attribute : uint8_t {
   kReadOnly  = 0x01,
@@ -50,7 +51,7 @@ enum class Attribute : uint8_t {
 };
 
 struct DirectoryEntry {
-unsigned char name[11];
+  unsigned char name[11];
   Attribute attr;
   uint8_t ntres;
   uint8_t create_time_tenth;
@@ -67,7 +68,7 @@ unsigned char name[11];
     return first_cluster_low |
       (static_cast<uint32_t>(first_cluster_high) << 16);
   }
-} __attribute((packed));
+} __attribute__((packed));
 
 extern BPB* boot_volume_image;
 extern unsigned long bytes_per_cluster;
@@ -120,4 +121,8 @@ unsigned long NextCluster(unsigned long cluster);
 DirectoryEntry* FindFile(const char* name, unsigned long directory_cluster = 0);
 
 bool NameIsEqual(const DirectoryEntry& entry, const char* name);
+
+/** @brief 指定されたファイルの内容をバッファへコピーする。
+ */
+size_t LoadFile(void *buf, size_t len, const DirectoryEntry& entry);
 }

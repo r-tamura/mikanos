@@ -29,6 +29,8 @@ class Error {
       kNoPCIMSI,
       kUnknownPixelFormat,
       kNoSuchTask,
+      kInvalidFormat,
+      kFrameTooSmall,
       kLastOfCode,  // この列挙子は常に最後に配置する
     };
 
@@ -57,9 +59,10 @@ class Error {
       "kUnknownPixelFormat",
       "kNoPCIMSI",
       "kNoSuchTask",
+      "kInvalidFormat",
+      "kFrameTooSmall",
     };
     static_assert(Error::Code::kLastOfCode == code_names_.size());
-
 
     public:
       Error(Code code, const char* file, int line) : code_{code}, line_{line}, file_{file} {}
@@ -89,7 +92,7 @@ class Error {
       const char* file_;
 };
 
-#define MAKE_ERROR(code) Error(code, __FILE__, __LINE__)
+#define MAKE_ERROR(code) Error((code), __FILE__, __LINE__)
 
 template <class T>
 struct WithError {

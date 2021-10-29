@@ -51,7 +51,7 @@ bool DescriptionHeader::IsValid(const char* expected_signature) const {
     return false;
   }
   if (auto sum = SumBytes(this, this->length); sum != 0) {
-    Log(kDebug, "sum of %s bytes must be 0: %d\n", this->length, sum);
+    Log(kDebug, "sum of %s bytes must be 0: %d\n", this->length,  sum);
     return false;
   }
   return true;
