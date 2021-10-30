@@ -106,6 +106,11 @@ void InitializeInterrupt() {
                 reinterpret_cast<uint64_t>(handler),
                 kKernelCS);
   };
+  SetIDTEntry(idt[InterruptVector::kLAPICTimer],
+              MakeIDTAttr(DescriptorType::kInterruptGate /* DPL */,
+                          true /* present */, kISTForTimer /* IST */),
+              reinterpret_cast<int64_t>(IntHandlerLAPICTimer),
+              kKernelCS);
   set_idt_entry(InterruptVector::kXHCI, IntHandlerXHCI);
   set_idt_entry(InterruptVector::kLAPICTimer, IntHandlerLAPICTimer);
   set_idt_entry(0,  IntHandlerDE);
