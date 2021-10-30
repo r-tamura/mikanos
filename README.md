@@ -30,7 +30,7 @@ build
 - Run on QEMU
 
 ```shell
-~/osbook/devenv/run_qemu.sh ~/edk2/Build/MikanLoaderX64/DEBUG_CLANG38/X64/Loader.efi ~/workspace/mikanos/kernel/kernel.elf
+make run
 ```
 
 - Run QEMU with debug mode enabled
