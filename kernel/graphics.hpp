@@ -127,7 +127,7 @@ class BGRResv8BitPerColorPixelWriter : public FrameBufferWriter {
 void DrawRectangle(PixelWriter&, const Vector2D<int>& pos, const Vector2D<int>& size, const PixelColor& c);
 void FillRectangle(PixelWriter&, const Vector2D<int>& pos, const Vector2D<int>& size, const PixelColor& c);
 
-const PixelColor kDesktopBGColor{45, 118, 237};
+const PixelColor kDesktopBGColor = ToColor(0xac3d17);
 const PixelColor kDesktopFGColor{255, 255, 255};
 
 void DrawDesktop(PixelWriter& writer);
