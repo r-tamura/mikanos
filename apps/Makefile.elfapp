@@ -7,8 +7,11 @@ LDFLAGS += --entry main -z norelro --image-base 0xffff800000000000 --static
 .PHONY: all
 all: $(TARGET)
 
-$(TARGET): $(OBJES) Makefile
+$(TARGET): $(OBJS) Makefile
 			ld.lld $(LDFLAGS) -o $@ $(OBJS) -lc -lc++ -lc++abi
+
+%.o: %.c Makefile
+			 clang $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp Makefile
 			 clang++ $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
