@@ -14,7 +14,7 @@ enum LogLevel {
 };
 
 /** @brief グローバルなログ優先度のしきい値を変更する */
-void SetLogLevel(LogLevel level);
+void SetLogLevel(enum LogLevel level);
 
 /** @brief ログを指定された優先度で記録する */
-int Log(LogLevel level, const char* format, ...);
+int Log(enum LogLevel level, const char* format, ...);
