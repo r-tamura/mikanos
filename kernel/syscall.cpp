@@ -137,8 +137,8 @@ SYSCALL(WinReDraw) {
 
 SYSCALL(WinDrawLine) {
   return DoWinFunc(
-    [](Window& win,
-      int x0, int y0, int x1, int y1, uint32_t color) {
+      [](Window& win,
+        int x0, int y0, int x1, int y1, uint32_t color) {
         auto sign = [](int x) {
           return (x > 0) ? 1 : (x < 0) ? -1 : 0;
         };
@@ -175,8 +175,28 @@ SYSCALL(WinDrawLine) {
             win.Writer()->Write({x, y}, ToColor(color));
           }
         }
-        return Result{0, 0};
+        return Result{ 0, 0 };
       }, arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
+SYSCALL(CloseWindow) {
+  const unsigned int layer_id = arg1 & 0xffffffff;
+  const auto layer = layer_manager->FindLayer(layer_id);
+
+  if (layer == nullptr) {
+    return { EBADF, 0 };
+  }
+
+  const auto layer_pos = layer->GetPosition();
+  const auto win_size = layer->GetWindow()->Size();
+
+  __asm__("cli");
+  active_layer->Activate(0);
+  layer_manager->RemoveLayer(layer_id);
+  layer_manager->Draw({layer_pos, win_size});
+  __asm__("sti");
+
+  return { 0, 0 };
 }
 
 #undef SYSCALL
@@ -184,21 +204,22 @@ SYSCALL(WinDrawLine) {
 }
 
 using SyscallFuncType = syscall::Result (uint64_t, uint64_t, uint64_t,
-                                 uint64_t, uint64_t, uint64_t);
-extern "C" std::array<SyscallFuncType*, 9> syscall_table{
+                                         uint64_t, uint64_t, uint64_t);
+extern "C" std::array<SyscallFuncType*, 10> syscall_table{
   /* 0x00 */ syscall::LogString,
   /* 0x01 */ syscall::PutString,
   /* 0x02 */ syscall::Exit,
   /* 0x03 */ syscall::OpenWindow,
   /* 0x04 */ syscall::WinWriteString,
   /* 0x05 */ syscall::WinFillRectangle,
-  /* 0x07 */ syscall::GetCuurentTick,
-  /* 0x08 */ syscall::WinReDraw,
-  /* 0x09 */ syscall::WinDrawLine,
+  /* 0x06 */ syscall::GetCuurentTick,
+  /* 0x07 */ syscall::WinReDraw,
+  /* 0x08 */ syscall::WinDrawLine,
+  /* 0x09 */ syscall::CloseWindow,
 };
 
 void InitializeSyscall() {
-  WriteMSR(kIA32_EFER, 0x501u);
+  WriteMSR(kIA32_EFER, 0x0501u);
   WriteMSR(kIA32_LSTAR, reinterpret_cast<uint64_t>(SyscallEntry));
   WriteMSR(kIA32_STAR, static_cast<uint64_t>(8) << 32 |
                        static_cast<uint64_t>(16 | 3) << 48);
