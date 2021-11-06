@@ -6,6 +6,8 @@
 
 #include "interrupt.hpp"
 
+#include <csignal>
+
 #include "asmfunc.h"
 #include "segment.hpp"
 #include "timer.hpp"
@@ -62,9 +64,21 @@ namespace {
     PrintHex(frame->rsp, 16, {500 + 8*12, 16*3});
   }
 
+  void KillApp(InterruptFrame* frame) {
+    const auto cpl = frame->cs & 0x3;
+    if (cpl != 3) {
+      return;
+    }
+
+    auto& task = task_manager->CurrentTask();
+    __asm__("sti");
+    ExitApp(task.OSStackPointer(), 128 + SIGSEGV);
+  }
+
   #define FaultHandlerWithError(fault_name) \
     __attribute__((interrupt)) \
     void IntHandler ## fault_name (InterruptFrame* frame, uint64_t error_code) { \
+      KillApp(frame); \
       PrintFrame(frame, "#" #fault_name); \
       WriteString(*screen_writer, {500, 16*4}, "ERR", {0, 0, 0}); \
       PrintHex(error_code, 16, {500 + 8*4, 16*4}); \
@@ -74,6 +88,7 @@ namespace {
   #define FaultHandlerNoError(fault_name) \
     __attribute__((interrupt)) \
     void IntHandler ## fault_name (InterruptFrame* frame) { \
+      KillApp(frame); \
       PrintFrame(frame, "#" #fault_name); \
       while (true) __asm__("hlt"); \
     }
@@ -106,12 +121,12 @@ void InitializeInterrupt() {
                 reinterpret_cast<uint64_t>(handler),
                 kKernelCS);
   };
-  SetIDTEntry(idt[InterruptVector::kLAPICTimer],
-              MakeIDTAttr(DescriptorType::kInterruptGate /* DPL */,
-                          true /* present */, kISTForTimer /* IST */),
-              reinterpret_cast<int64_t>(IntHandlerLAPICTimer),
-              kKernelCS);
   set_idt_entry(InterruptVector::kXHCI, IntHandlerXHCI);
+  SetIDTEntry(idt[InterruptVector::kLAPICTimer],
+              MakeIDTAttr(DescriptorType::kInterruptGate, 0 /* DPL */,
+                          true /* present */, kISTForTimer /* IST */),
+              reinterpret_cast<uint64_t>(IntHandlerLAPICTimer),
+              kKernelCS);
   set_idt_entry(InterruptVector::kLAPICTimer, IntHandlerLAPICTimer);
   set_idt_entry(0,  IntHandlerDE);
   set_idt_entry(1,  IntHandlerDB);

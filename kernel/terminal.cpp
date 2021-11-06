@@ -456,10 +456,7 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
 
   auto elf_header = reinterpret_cast<Elf64_Ehdr*>(&file_buf[0]);
   if (memcmp(elf_header->e_ident, "\x7f" "ELF", 4) != 0) {
-    using Func = void ();
-    auto f = reinterpret_cast<Func*>(&file_buf[0]);
-    f();
-    return MAKE_ERROR(Error::kSuccess);
+    return MAKE_ERROR(Error::kInvalidFile);
   }
 
   __asm__("cli");
@@ -634,7 +631,7 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
     switch (msg->type) {
     case Message::kTimerTimeout:
       add_blink_timer(msg->arg.timer.timeout);
-      if (window_isactive) {
+      if (show_window && window_isactive) {
         const auto area = terminal->BlinkCursor();
         Message msg = MakeLayerMessage(
             task_id, terminal->LayerID(), LayerOperation::DrawArea, area);
@@ -658,7 +655,7 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
       }
       break;
     case Message::kWindowActive:
-      window_isactive = msg->arg.window_activate.activate;
+      window_isactive = msg->arg.window_active.activate;
       break;
     default:
       break;

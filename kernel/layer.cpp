@@ -214,7 +214,7 @@ namespace {
     }
 
     Message msg{Message::kWindowActive};
-    msg.arg.window_activate.activate = activate;
+    msg.arg.window_active.activate = activate;
     return task_manager->SendMessage(task_it->second, msg);
   }
 }

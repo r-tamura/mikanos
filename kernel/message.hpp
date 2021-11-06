@@ -52,6 +52,6 @@ struct Message {
 
     struct {
       int activate; // 1: activate, 0: deactivate
-    } window_activate;
+    } window_active;
   } arg;
 };
