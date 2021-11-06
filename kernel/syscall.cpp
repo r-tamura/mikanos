@@ -129,11 +129,11 @@ SYSCALL(WinFillRectangle) {
       }, arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
-SYSCALL(GetCuurentTick) {
+SYSCALL(GetCurrentTick) {
   return { timer_manager->CurrentTick(), kTimerFreq };
 }
 
-SYSCALL(WinReDraw) {
+SYSCALL(WinRedraw) {
   return DoWinFunc(
     [](Window&) {
       return Result{ 0, 0 };
@@ -236,7 +236,15 @@ SYSCALL(ReadEvent) {
           msg->arg.keyboard.modifier & (kLControlBitMask | kRControlBitMask)) {
         app_events[i].type = AppEvent::kQuit;
         ++i;
+      } else {
+        app_events[i].type = AppEvent::kKeyPush;
+        app_events[i].arg.keypush.modifier = msg->arg.keyboard.modifier;
+        app_events[i].arg.keypush.keycode = msg->arg.keyboard.keycode;
+        app_events[i].arg.keypush.ascii = msg->arg.keyboard.ascii;
+        app_events[i].arg.keypush.press = msg->arg.keyboard.press;
+        ++i;
       }
+      break;
     case Message::kMouseMove:
       app_events[i].type = AppEvent::kMouseMove;
       app_events[i].arg.mouse_move.x = msg->arg.mouse_move.x;
@@ -304,8 +312,8 @@ extern "C" std::array<SyscallFuncType*, 0xc> syscall_table{
   /* 0x03 */ syscall::OpenWindow,
   /* 0x04 */ syscall::WinWriteString,
   /* 0x05 */ syscall::WinFillRectangle,
-  /* 0x06 */ syscall::GetCuurentTick,
-  /* 0x07 */ syscall::WinReDraw,
+  /* 0x06 */ syscall::GetCurrentTick,
+  /* 0x07 */ syscall::WinRedraw,
   /* 0x08 */ syscall::WinDrawLine,
   /* 0x09 */ syscall::CloseWindow,
   /* 0x0a */ syscall::ReadEvent,

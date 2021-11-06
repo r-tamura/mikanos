@@ -450,7 +450,7 @@ Error Terminal::ExecuteFile(const fat::DirectoryEntry& file_entry, char* command
   __asm__("sti");
 
   auto entry_addr = elf_header->e_entry;
-  int ret = CallApp(argc.value, argv, 3<< 3 | 3, entry_addr,
+  int ret = CallApp(argc.value, argv, 3 << 3 | 3, entry_addr,
                     stack_frame_addr.value + 4096 - 8,
                     &task.OSStackPointer());
 
@@ -549,7 +549,7 @@ std::map<uint64_t, Terminal*>* terminals;
 void TaskTerminal(uint64_t task_id, int64_t data) {
   __asm__("cli");
   Task& task = task_manager->CurrentTask();
-  Terminal* terminal = new Terminal(task_id);;
+  Terminal* terminal = new Terminal{task_id};
   layer_manager->Move(terminal->LayerID(), {100, 200});
   active_layer->Activate(terminal->LayerID());
   layer_task_map->insert(std::make_pair(terminal->LayerID(), task_id));
@@ -578,7 +578,7 @@ void TaskTerminal(uint64_t task_id, int64_t data) {
       }
       break;
     case Message::kKeyPush:
-      {
+      if (msg->arg.keyboard.press) {
         const auto area = terminal->InputKey(msg->arg.keyboard.modifier,
                                              msg->arg.keyboard.keycode,
                                              msg->arg.keyboard.ascii);
