@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cstddef>
 #include <utility> // Note: std::pairがエラーとなる
@@ -138,4 +139,16 @@ bool NameIsEqual(const DirectoryEntry& entry, const char* name);
 /** @brief 指定されたファイルの内容をバッファへコピーする。
  */
 size_t LoadFile(void *buf, size_t len, const DirectoryEntry& entry);
+
+class FileDescriptor {
+  public:
+    explicit FileDescriptor(DirectoryEntry& fat_entry);
+    size_t Read(void* buf, size_t len);
+
+  private:
+    DirectoryEntry& fat_entry_;
+    size_t rd_off_ = 0;
+    unsigned long rd_cluster_ = 0;
+    size_t rd_cluster_off_ = 0;
+};
 }
