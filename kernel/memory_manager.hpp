@@ -40,6 +40,11 @@ class FrameID {
 
 static const FrameID kNullFrame{std::numeric_limits<size_t>::max()};
 
+struct MemoryStat {
+  size_t allocated_frames;
+  size_t total_frames;
+};
+
 /**
  * 1ビットを1フレームに対応させて、ビットマップにより空きフレームを管理する.
  * 配列 alloc_map の悪ビットがフレームに対応し, 0なら空き, 1なら使用中
@@ -71,6 +76,10 @@ class BitmapMemoryManager {
      * @param range_end_   メモリ範囲の周転. 最終フレームの次のフレーム.
      */
     void SetMemoryRange(FrameID range_begin, FrameID range_end);
+
+    /** @brief 空き/総フレームの数を返す
+     */
+    MemoryStat Stat() const;
 
   private:
     std::array<MapLineType, kFrameCount / kBitsPerMapLine> alloc_map_;
