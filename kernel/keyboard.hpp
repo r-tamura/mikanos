@@ -19,3 +19,5 @@ static const int kRControlBitMask = 0b00010000u;
 static const int kRShiftBitMask   = 0b00100000u;
 static const int kRAltBitMask     = 0b01000000u;
 static const int kRGUIBitMask     = 0b10000000u;
+
+static const int kIntlYenBitMask  = 0b00001000u;

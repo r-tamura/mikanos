@@ -20,10 +20,17 @@ const char keycode_map[256] = {
   0,    0,    0,    0,    '/',  '*',  '-',  '+', // 80
   '\n', '1',  '2',  '3',  '4',  '5',  '6',  '7', // 88
   '8',  '9',  '0',  '.', '\\',  0,    0,    '=', // 96
+  0,    0,    0,    0,    0,    0,    0,    0,   // 104
+  0,    0,    0,    0,    0,    0,    0,    0,   // 112
+  0,    0,    0,    0,    0,    0,    0,    0,   // 120
+  0,    0,    0,    0,    0,    0,    0,    0,   // 128
+  0,    '\\', 0,    0,    0,    0,    0,    0,   // 136
 };
 
+// #@@range_begin(keycode_map)
 const char keycode_map_shifted[256] = {
   0,    0,    0,    0,    'A',  'B',  'C',  'D', // 0
+// #@@range_end(keycode_map)
   'E',  'F',  'G',  'H',  'I',  'J',  'K',  'L', // 8
   'M',  'N',  'O',  'P',  'Q',  'R',  'S',  'T', // 16
   'U',  'V',  'W',  'X',  'Y',  'Z',  '!',  '@', // 24
@@ -36,6 +43,11 @@ const char keycode_map_shifted[256] = {
   0,    0,    0,    0,    '/',  '*',  '-',  '+', // 80
   '\n', '1',  '2',  '3',  '4',  '5',  '6',  '7', // 88
   '8',  '9',  '0',  '.', '\\',  0,    0,    '=', // 96
+  0,    0,    0,    0,    0,    0,    0,    0,   // 104
+  0,    0,    0,    0,    0,    0,    0,    0,   // 112
+  0,    0,    0,    0,    0,    0,    0,    0,   // 120
+  0,    0,    0,    0,    0,    0,    0,    0,   // 128
+  0,    '|',  0,    0,    0,    0,    0,    0,   // 136
 };
 
 }
@@ -44,9 +56,17 @@ void InitializeKeyboard() {
   usb::HIDKeyboardDriver::default_observer =
     [](uint8_t modifier, uint8_t keycode, bool press) {
       const bool shift = (modifier & (kLShiftBitMask | kRShiftBitMask)) != 0;
+      const bool intl_yen = (modifier & kIntlYenBitMask) != 0;
       char ascii = keycode_map[keycode];
       if (shift) {
         ascii = keycode_map_shifted[keycode];
+      }
+      if (intl_yen) {
+        if (shift) {
+          ascii = '|';
+        } else {
+          ascii = '\\';
+        }
       }
       Message msg{Message::kKeyPush};
       msg.arg.keyboard.modifier = modifier;
