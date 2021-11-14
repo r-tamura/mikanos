@@ -483,11 +483,13 @@ void Terminal::ExecuteLine() {
     auto [ file_entry, post_slash ] = fat::FindFile(command);
     if (!file_entry) {
       PrintToFD(*files_[2], "no such command: %s\n", command);
+      exit_code = 1;
     } else if (file_entry->attr != fat::Attribute::kDirectory && post_slash) {
       char name[13];
       fat::FormatName(*file_entry, name);
       PrintToFD(*files_[2], "%s is not a directory\n", name);
-    } else  {
+      exit_code = 1;
+    } else {
       auto [ ec, err ] = ExecuteFile(*file_entry, command, first_arg);
       if (err) {
         PrintToFD(*files_[2], "failed to exec file: %s\n", err.Name());
@@ -514,7 +516,7 @@ void Terminal::ExecuteLine() {
 }
 
 WithError<int> Terminal::ExecuteFile(fat::DirectoryEntry& file_entry,
-                            char* command, char* first_arg) {
+                                     char* command, char* first_arg) {
   __asm__("cli");
   auto& task = task_manager->CurrentTask();
   __asm__("sti");

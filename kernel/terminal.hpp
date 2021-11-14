@@ -72,7 +72,6 @@ class Terminal {
     int last_exit_code_{0};
 };
 
-extern std::map<uint64_t, Terminal*>* terminals;
 void TaskTerminal(uint64_t task_id, int64_t data);
 
 class TerminalFileDescriptor : public FileDescriptor {

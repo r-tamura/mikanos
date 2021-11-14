@@ -64,7 +64,7 @@ void FormatName(const DirectoryEntry& entry, char* dest) {
 
 unsigned long NextCluster(unsigned long cluster) {
   uint32_t next = GetFAT()[cluster];
-  if (IsEndOfClusterchain(cluster)) {
+  if (IsEndOfClusterchain(next)) {
     return kEndOfClusterchain;
   }
   return next;
@@ -142,7 +142,7 @@ uint32_t* GetFAT() {
 
 unsigned long ExtendCluster(unsigned long eoc_cluster, size_t n) {
   uint32_t* fat = GetFAT();
-  while (!IsEndOfClusterchain(eoc_cluster)) {
+  while (!IsEndOfClusterchain(fat[eoc_cluster])) {
     eoc_cluster = fat[eoc_cluster];
   }
 

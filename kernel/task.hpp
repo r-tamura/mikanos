@@ -9,13 +9,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <map>
 #include <optional>
 #include <vector>
 
 #include <memory>  // Note: std::unique_ptrに必要
 #include <cstring> // Note: memsetに必要
 #include <algorithm> // Note: std::findに必要
-#include <map> // std::mapに必要
 
 #include "error.hpp"
 #include "message.hpp"

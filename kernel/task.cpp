@@ -94,6 +94,10 @@ uint64_t Task::DPagingEnd() const {
   return dpaging_end_;
 }
 
+void Task::SetDPagingEnd(uint64_t v) {
+  dpaging_end_ = v;
+}
+
 uint64_t Task::FileMapEnd() const {
   return file_map_end_;
 }
@@ -106,10 +110,6 @@ std::vector<FileMapping>& Task::FileMaps() {
   return file_maps_;
 }
 
-void Task::SetDPagingEnd(uint64_t v) {
-  dpaging_end_ = v;
-}
-
 TaskManager::TaskManager() {
   Task& task = NewTask()
     .SetLevel(current_level_)
@@ -120,7 +120,7 @@ TaskManager::TaskManager() {
     .InitContext(TaskIdle, 0)
     .SetLevel(0)
     .SetRunning(true);
-  running_[0].push_front(&idle);
+  running_[0].push_back(&idle);
 }
 
 Task& TaskManager::NewTask() {
