@@ -408,6 +408,7 @@ void Terminal::ExecuteLine() {
       .InitContext(TaskTerminal, reinterpret_cast<int64_t>(term_desc))
       .Wakeup()
       .ID();
+    (*layer_task_map)[layer_id_] = subtask_id;
   }
 
   if (strcmp(command, "echo") == 0) {
@@ -517,6 +518,7 @@ void Terminal::ExecuteLine() {
     pipe_fd->FinishWrite();
     __asm__("cli");
     auto [ ec, err ] = task_manager->WaitFinish(subtask_id);
+    (*layer_task_map)[layer_id_] = task_.ID();
     __asm__("sti");
     if (err) {
       Log(kWarn, "failed to wait finish: %s\n", err.Name());
@@ -795,12 +797,14 @@ size_t TerminalFileDescriptor::Read(void* buf, size_t len) {
 
     bufc[0] = msg->arg.keyboard.ascii;
     term_.Print(bufc, 1);
+    term_.Redraw();
     return 1;
   }
 }
 
 size_t TerminalFileDescriptor::Write(const void* buf, size_t len) {
   term_.Print(reinterpret_cast<const char*>(buf), len);
+  term_.Redraw();
   return len;
 }
 

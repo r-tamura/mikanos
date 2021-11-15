@@ -21,9 +21,10 @@ namespace usb {
     const auto changed = prev ^ current;
     const auto pressed = changed & current;
 
-    if (Buffer()[0] == kIntlYenBitMask ||
-        Buffer()[0] == kIntlYenBitMask | kLShiftBitMask ||
-        Buffer()[0] == kIntlYenBitMask | kRShiftBitMask) {
+    const auto modfier = Buffer()[0];
+    if (modfier == kIntlYenBitMask ||
+        modfier == (kIntlYenBitMask | kLShiftBitMask) ||
+        modfier == (kIntlYenBitMask | kRShiftBitMask)) {
       NotifyKeyPush(Buffer()[0], 0, true);
     }
     for (int key = 1; key < 256; ++key) {
